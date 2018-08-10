@@ -5,22 +5,26 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # matplot 에서 한글을 표시하기 위한 설정
-font_location = "C:/Windows/Fonts/NanumSquareR.ttf"
+font_location = "C:/Windows/Fonts/NanumGothic.ttf"
 font_name = matplotlib.font_manager.FontProperties(fname=font_location).get_name()
 print(font_name)
 matplotlib.rc('font', family=font_name)
 
 # 단어 벡터를 분석해볼 임의의 문장들
-sentences = ["당뇨병 무엇",
-             "정의 원인 증상 분류 진단 당뇨병",
-             "당뇨병 치료 관리",
-             "치료 약물 용법 혈당관리",
-             "관리 생활습관 발 기타",
-             "당뇨병 합병증",
-             "합볍증 급성 만성",
-             "당뇨병 종류",
-             "종류 제1형 당뇨병 임신형 당뇨병"
- ]
+sentences = ["나 고양이 좋다",
+             "나 강아지 좋다",
+             "나 동물 좋다",
+             "강아지 고양이 동물",
+             "여자친구 고양이 강아지 좋다",
+             "고양이 생선 우유 좋다",
+             "강아지 생선 싫다 우유 좋다",
+             "강아지 고양이 눈 좋다",
+             "나 여자친구 좋다",
+             "여자친구 나 싫다",
+             "여자친구 나 영화 책 음악 좋다",
+             "나 게임 만화 애니 좋다",
+             "고양이 강아지 싫다",
+             "강아지 고양이 좋다"]
 
 # 문장을 전부 합친 후 공백으로 단어들을 나누고 고유한 단어들로 리스트를 만듭니다.
 word_sequence = " ".join(sentences).split()
@@ -30,6 +34,9 @@ word_list = list(set(word_list))
 # 리스트에서 문자들의 인덱스를 뽑아서 사용하기 위해,
 # 이를 표현하기 위한 연관 배열과, 단어 리스트에서 단어를 참조 할 수 있는 인덱스 배열을 만듭합니다.
 word_dict = {w: i for i, w in enumerate(word_list)}
+print("word_sequence: ", word_sequence)
+print("word_list: ", word_list)
+print("word_dict: ", word_dict)
 
 # 윈도우 사이즈를 1 로 하는 skip-gram 모델을 만듭니다.
 # 예) 나 게임 만화 애니 좋다
@@ -43,6 +50,8 @@ for i in range(1, len(word_sequence) - 1):
     target = word_dict[word_sequence[i]]
     context = [word_dict[word_sequence[i - 1]], word_dict[word_sequence[i + 1]]]
 
+    print("target: ", target)
+    print("context: ", context)
     # (target, context[0]), (target, context[1])..
     for w in context:
         skip_grams.append([target, w])
