@@ -98,53 +98,55 @@ sess = tf.Session()
 sess.run(tf.global_variables_initializer())
 
 input_batch, output_batch, target_batch = make_batch(seq_data)
-
+print("input_batch:", input_batch)
+print("output_batch", output_batch)
+print("target_batch", target_batch)
 for epoch in range(total_epoch):
     _, loss = sess.run([optimizer, cost],
                        feed_dict={enc_input: input_batch,
                                   dec_input: output_batch,
                                   targets: target_batch})
 
-    print('Epoch:', '%04d' % (epoch + 1),
-          'cost =', '{:.6f}'.format(loss))
+    #print('Epoch:', '%04d' % (epoch + 1),
+    #      'cost =', '{:.6f}'.format(loss))
 
 print('최적화 완료!')
 
 
-#########
-# 번역 테스트
-######
-# 단어를 입력받아 번역 단어를 예측하고 디코딩하는 함수
-def translate(word):
-    # 이 모델은 입력값과 출력값 데이터로 [영어단어, 한글단어] 사용하지만,
-    # 예측시에는 한글단어를 알지 못하므로, 디코더의 입출력값을 의미 없는 값인 P 값으로 채운다.
-    # ['word', 'PPPP']
-    seq_data = [word, 'P' * len(word)]
-    input_batch, output_batch, target_batch = make_batch([seq_data])
-
-    # 결과가 [batch size, time step, input] 으로 나오기 때문에,
-    # 2번째 차원인 input 차원을 argmax 로 취해 가장 확률이 높은 글자를 예측 값으로 만든다.
-    prediction = tf.argmax(model, 2)
-
-    result = sess.run(prediction,
-                      feed_dict={enc_input: input_batch,
-                                 dec_input: output_batch,
-                                 targets: target_batch})
-
-    # 결과 값인 숫자의 인덱스에 해당하는 글자를 가져와 글자 배열을 만든다.
-    decoded = [char_arr[i] for i in result[0]]
-
-    # 출력의 끝을 의미하는 'E' 이후의 글자들을 제거하고 문자열로 만든다.
-    end = decoded.index('E')
-    translated = ''.join(decoded[:end])
-
-    return translated
-
-
-print('\n=== 번역 테스트 ===')
-
-print('word ->', translate('word'))
-print('wodr ->', translate('wodr'))
-print('love ->', translate('love'))
-print('loev ->', translate('loev'))
-print('abcd ->', translate('abcd'))
+# #########
+# # 번역 테스트
+# ######
+# # 단어를 입력받아 번역 단어를 예측하고 디코딩하는 함수
+# def translate(word):
+#     # 이 모델은 입력값과 출력값 데이터로 [영어단어, 한글단어] 사용하지만,
+#     # 예측시에는 한글단어를 알지 못하므로, 디코더의 입출력값을 의미 없는 값인 P 값으로 채운다.
+#     # ['word', 'PPPP']
+#     seq_data = [word, 'P' * len(word)]
+#     input_batch, output_batch, target_batch = make_batch([seq_data])
+#
+#     # 결과가 [batch size, time step, input] 으로 나오기 때문에,
+#     # 2번째 차원인 input 차원을 argmax 로 취해 가장 확률이 높은 글자를 예측 값으로 만든다.
+#     prediction = tf.argmax(model, 2)
+#
+#     result = sess.run(prediction,
+#                       feed_dict={enc_input: input_batch,
+#                                  dec_input: output_batch,
+#                                  targets: target_batch})
+#
+#     # 결과 값인 숫자의 인덱스에 해당하는 글자를 가져와 글자 배열을 만든다.
+#     decoded = [char_arr[i] for i in result[0]]
+#
+#     # 출력의 끝을 의미하는 'E' 이후의 글자들을 제거하고 문자열로 만든다.
+#     end = decoded.index('E')
+#     translated = ''.join(decoded[:end])
+#
+#     return translated
+#
+#
+# print('\n=== 번역 테스트 ===')
+#
+# print('word ->', translate('word'))
+# print('wodr ->', translate('wodr'))
+# print('love ->', translate('love'))
+# print('loev ->', translate('loev'))
+# print('abcd ->', translate('abcd'))
