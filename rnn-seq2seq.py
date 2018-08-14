@@ -16,7 +16,7 @@ dic_len = len(num_dic)
 # 영어를 한글로 번역하기 위한 학습 데이터
 seq_data = [['word', '단어'], ['wood', '나무'],
             ['game', '놀이'], ['girl', '소녀'],
-            ['kiss', '키스들'], ['love', '사랑']]
+            ['kiss', '키스'], ['love', '사랑']]
 
 
 def make_batch(seq_data):
@@ -98,13 +98,7 @@ sess = tf.Session()
 sess.run(tf.global_variables_initializer())
 
 input_batch, output_batch, target_batch = make_batch(seq_data)
-for i in input_batch:
-    print("in:", i)
-    print(len(i))
-
-for o in output_batch:
-    print("out:", o)
-    print(len(o))
+print(target_batch)
 
 # print(target_batch)
 # for epoch in range(total_epoch):
