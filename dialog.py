@@ -59,7 +59,7 @@ class Dialog():
             self.input_size = self.vocab_size
         else:
             self.input_size = max_size
-
+        return max_size
 
     def _max_len(self, batch_set):
         max_len_input = 0
@@ -95,50 +95,37 @@ class Dialog():
             return seq
 
     def transform(self, input, output, input_max, output_max):
-        enc_input = self._pad(input, input_max)
-        dec_input = self._pad(output, output_max, start=True)
-        target = self._pad(output, output_max, eos=True)
-
-        # 구글 방식으로 입력을 인코더에 역순으로 입력한다.
-        enc_input.reverse()
-
-        enc_input = np.eye(self.vocab_size)[enc_input]
-        dec_input = np.eye(self.vocab_size)[dec_input]
+        enc_input = []
+        dec_input = []
+        target = []
+        for i, o in zip(input, output):
+            # 구글 방식으로 입력을 인코더에 역순으로 입력한다.
+            tmp_enc = self._pad(i, input_max)
+            enc_input.append(np.eye(self.vocab_size)[tmp_enc.reverse()])
+            tmp_dec = self._pad(o, output_max, start=True)
+            dec_input.append(np.eye(self.vocab_size)[tmp_dec])
+            tmp_tar = self._pad(o, output_max, eos=True)
+            target.append(tmp_tar)
 
         return enc_input, dec_input, target
 
-    def next_batch(self, batch_size):
+    def make_batch(self):
         enc_input = []
         dec_input = []
         target = []
 
-        start = self._index_in_epoch
-
-        if self._index_in_epoch + batch_size < len(self.examples) - 1:
-            self._index_in_epoch = self._index_in_epoch + batch_size
-        else:
-            self._index_in_epoch = 0
-
-        batch_set = self.examples[start:start+batch_size]
-
-        # 작은 데이터셋을 실험하기 위한 꼼수
-        # 현재의 답변을 다음 질문의 질문으로 하고, 다음 질문을 답변으로 하여 데이터를 늘린다.
-        if FLAGS.data_loop is True:
-           batch_set = batch_set + batch_set[1:] + batch_set[0:1]
+        for n in range(0, len(self.examples), 2):
+            enc_input.append(self.examples[n])
+            dec_input.append(self.examples[n+1])
+            target.append(self.examples[n + 1])
 
         # TODO: 구글처럼 버킷을 이용한 방식으로 변경
         # 간단하게 만들기 위해 구글처럼 버킷을 쓰지 않고 같은 배치는 같은 사이즈를 사용하도록 만듬
-        max_len_input, max_len_output = self._max_len(batch_set)
+        max_len_input = self._max_len2(enc_input)
+        max_len_output = self._max_len2(dec_input)
 
-        for i in range(0, len(batch_set) - 1, 2):
-            enc, dec, tar = self.transform(batch_set[i], batch_set[i+1],
-                                           max_len_input, max_len_output)
-
-            enc_input.append(enc)
-            dec_input.append(dec)
-            target.append(tar)
-
-        return enc_input, dec_input, target
+        enc, dec, tar = self.transform(enc_input, dec_input, max_len_input, max_len_output)
+        return enc, dec, tar
 
     def tokens_to_ids(self, tokens):
         ids = []
@@ -214,10 +201,10 @@ def main(_):
         dialog.load_vocab()
         dialog.load_examples()
 
-        enc, dec, target = dialog.next_batch(10)
-      #  print(target)
-        enc, dec, target = dialog.next_batch(10)
-       # print(target)
+        enc, dec, target = dialog.make_batch()
+        print(np.array(enc).shape)
+        # print(dec)
+        # print(target)
 
     elif FLAGS.voc_build:
         dialog.build_vocab()

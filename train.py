@@ -7,6 +7,7 @@ from config import FLAGS
 from model import Seq2Seq
 from dialog import Dialog
 from config import FLAGS
+import numpy as np
 
 
 def train(dialog, batch_size=100, epoch=FLAGS.epoch):
@@ -24,21 +25,20 @@ def train(dialog, batch_size=100, epoch=FLAGS.epoch):
 
         writer = tf.summary.FileWriter(FLAGS.log_dir, sess.graph)
 
-        total_batch = int(math.ceil(len(dialog.examples)/float(batch_size)))
-        print("total_batch:", total_batch)
-        for step in range(total_batch * epoch):
-            enc_input, dec_input, targets = dialog.next_batch(batch_size)
+        enc_input, dec_input, targets = dialog.make_batch()
 
-            _, loss = model.train(sess, enc_input, dec_input, targets)
-
-            if (step + 1) % 100 == 0:
-                model.write_logs(sess, writer, enc_input, dec_input, targets)
-
-                print('Step:', '%06d' % model.global_step.eval(),
-                      'cost =', '{:.6f}'.format(loss))
-
-        checkpoint_path = os.path.join(FLAGS.train_dir, FLAGS.ckpt_name)
-        model.saver.save(sess, checkpoint_path, global_step=model.global_step)
+        #
+        # for step in range(epoch):
+        #     _, loss = model.train(sess, enc_input, dec_input, targets)
+        #
+        #     if (step + 1) % 100 == 0:
+        #         model.write_logs(sess, writer, enc_input, dec_input, targets)
+        #
+        #         print('Step:', '%06d' % model.global_step.eval(),
+        #               'cost =', '{:.6f}'.format(loss))
+        #
+        # checkpoint_path = os.path.join(FLAGS.train_dir, FLAGS.ckpt_name)
+        # model.saver.save(sess, checkpoint_path, global_step=model.global_step)
 
     print('최적화 완료!')
 
