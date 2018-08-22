@@ -16,21 +16,7 @@ def load_data(sequence):
     return question, answer
 
 
-def make_dic(sequence, min_length, max_length, jamo_delete):
-    # dict = defaultdict(lambda: [])
-    # for doc in sequence:
-    #     for idx, word in enumerate(doc):
-    #         if len(word) > min_length:
-    #             normalizedword = word[:max_length]
-    #             if jamo_delete:
-    #                 tmp = []
-    #                 for char in normalizedword:
-    #                     if ord(char) < 12593 or ord(char) > 12643:
-    #                         tmp.append(char)
-    #                 normalizedword = ''.join(char for char in tmp)
-    #             if word not in dict[normalizedword]:
-    #                 dict[normalizedword].append(word)
-    # dict = sorted(dict.items(), key=operator.itemgetter(0))
+def make_dic(sequence):
     words = []
     for seq in sequence:
         for word in seq:
