@@ -23,12 +23,10 @@ class Dialog():
         self.vocab_dict = {}
         self.vocab_size = 0
         self.examples = []
-        self.input_size = 0
 
         self._index_in_epoch = 0
 
     def decode(self, indices, string=False):
-        print("indices:", indices)
         tokens = [[self.vocab_list[i] for i in dec] for dec in indices]
 
         if string:
@@ -41,7 +39,7 @@ class Dialog():
         return text.strip()
 
     def cut_eos(self, indices):
-        eos_idx = indices.index(self._EOS_ID_)
+        eos_idx = indices.index(self._EOS_)
         return indices[:eos_idx]
 
     def is_eos(self, voc_id):
@@ -50,30 +48,12 @@ class Dialog():
     def is_defined(self, voc_id):
         return voc_id in self._PRE_DEFINED_
 
-    def _max_len2(self, batch_set):
+    def _max_len(self, batch_set):
         max_size = 0
         for sentence in batch_set:
             if len(sentence) > max_size:
                 max_size = len(sentence)
-        if self.vocab_size > max_size:
-            self.input_size = self.vocab_size
-        else:
-            self.input_size = max_size
         return max_size
-
-    def _max_len(self, batch_set):
-        max_len_input = 0
-        max_len_output = 0
-
-        for i in range(0, len(batch_set), 2):
-            len_input = len(batch_set[i])
-            len_output = len(batch_set[i+1])
-            if len_input > max_len_input:
-                max_len_input = len_input
-            if len_output > max_len_output:
-                max_len_output = len_output
-
-        return max_len_input, max_len_output + 1
 
     def _pad(self, seq, max_len, start=None, eos=None):
         if start:
@@ -101,10 +81,13 @@ class Dialog():
         for i, o in zip(input, output):
             # 구글 방식으로 입력을 인코더에 역순으로 입력한다.
             tmp_enc = self._pad(i, input_max)
-            enc_input.append(np.eye(self.vocab_size)[tmp_enc.reverse()])
-            tmp_dec = self._pad(o, output_max, start=True)
+            tmp_enc.reverse()
+            enc_input.append(np.eye(self.vocab_size)[tmp_enc])
+
+            tmp_dec = self._pad(o, output_max + 1, start=True)
             dec_input.append(np.eye(self.vocab_size)[tmp_dec])
-            tmp_tar = self._pad(o, output_max, eos=True)
+
+            tmp_tar = self._pad(o, output_max + 1, eos=True)
             target.append(tmp_tar)
 
         return enc_input, dec_input, target
@@ -112,17 +95,15 @@ class Dialog():
     def make_batch(self):
         enc_input = []
         dec_input = []
-        target = []
 
         for n in range(0, len(self.examples), 2):
             enc_input.append(self.examples[n])
-            dec_input.append(self.examples[n+1])
-            target.append(self.examples[n + 1])
+            dec_input.append(self.examples[n + 1])
 
         # TODO: 구글처럼 버킷을 이용한 방식으로 변경
         # 간단하게 만들기 위해 구글처럼 버킷을 쓰지 않고 같은 배치는 같은 사이즈를 사용하도록 만듬
-        max_len_input = self._max_len2(enc_input)
-        max_len_output = self._max_len2(dec_input)
+        max_len_input = self._max_len(enc_input)
+        max_len_output = self._max_len(dec_input)
 
         enc, dec, tar = self.transform(enc_input, dec_input, max_len_input, max_len_output)
         return enc, dec, tar
@@ -140,15 +121,13 @@ class Dialog():
 
     def ids_to_tokens(self, ids):
         tokens = []
-
         for i in ids:
             tokens.append(self.vocab_list[i])
-
         return tokens
 
     def tokenizer(self, sentence_list, build=None, load=None):
         words = []
-        #_TOKEN_RE_ = re.compile("([.,!?\"':;)(])")
+
         for sentence in sentence_list:
             for fragment in sentence:
                 words.extend([fragment.strip().split()])
@@ -160,6 +139,7 @@ class Dialog():
             return build_words
         if load:
             return words
+
     # 어휘 사전 제작 및 디비에 저장
     def build_vocab(self):
         sequence_data = db.select_chat_sequence()
@@ -182,16 +162,16 @@ class Dialog():
         self.vocab_size = len(self.vocab_list)
         print('어휘 사전을 불러왔습니다.')
 
-
     # 예제 로드
     def load_examples(self):
         self.examples = []
         sequence_data = db.select_chat_sequence()
-        self._max_len2(sequence_data)
+
         tokens = self.tokenizer(sequence_data, load=True)
         for sentence in tokens:
             ids = self.tokens_to_ids(sentence)
             self.examples.append(ids)
+
 
 def main(_):
     dialog = Dialog()
@@ -202,9 +182,6 @@ def main(_):
         dialog.load_examples()
 
         enc, dec, target = dialog.make_batch()
-        print(np.array(enc).shape)
-        # print(dec)
-        # print(target)
 
     elif FLAGS.voc_build:
         dialog.build_vocab()
